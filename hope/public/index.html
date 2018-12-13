@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			*{
+				padding: 0;
+				margin: 0;
+			}
+			li{
+				list-style: none;
+			}
+			a{
+				text-decoration: none;
+			}
+			.box{
+				width: 80%;
+				border: 1px solid;
+				margin: auto;
+			}
+			ul{
+				width: 100%;
+				display: flex;
+				justify-content: space-around;
+				flex-wrap: wrap;
+			}
+			li{
+				width: 18%;
+				height: 200px;
+				border: 1px solid black;
+				margin-top: 40px;
+				text-align: center;
+				position: relative;
+			}
+			.purple{
+				background: purple;
+			}
+			#sx{
+				cursor: pointer;
+				position: absolute;
+				bottom: 0;
+				border: 1px solid;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="box">
+			<label>
+				<input type="text" name="xinyuan" id="xinyuan" value="" placeholder="心愿" />
+			</label>
+			<label>
+				<input type="button"  id="tijiao" value="提交"  />
+			</label>
+			<div class="main">
+					<ul>
+					</ul>
+			</div>
+		</div>
+	</body>
+	<script src="../js/ajax_v3.js" type="text/javascript" charset="utf-8"></script>
+	<script src="../js/jquery-1.11.3.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript">
+		$("#tijiao").click(function(){
+			if ($("#xinyuan").val()=="") {
+				alert("请输入愿望")
+			} else{
+				ajax.post("http://localhost:8080/add",{
+				xinyuan:$("#xinyuan").val(),
+				goodsTime: new Date().getTime()
+			}).then((res)=>{
+				arr=JSON.parse(res)
+				if (arr.status=="-1") {
+					alert(arr.statusText)
+				} else{
+					console.log(arr)
+					show()
+				}
+				
+			})
+			}
+		})
+		show()
+		function show(){
+				ajax.get("http://localhost:8080/show").then(res=>{
+				res = JSON.parse(res)
+				if (res.status=="0") {
+					$("ul").html(res.statusText)
+				}else if(res.status=="8"){
+					let arr = res.newArr;
+					let str = ""
+					for (var i = 0; i < arr.length; i++) {
+						str+=`
+						<li>
+						<button onclick=del("${arr[i]._id}")>删除</button>
+						<div class="content">
+						<p>${arr[i].xinyuan}</p>
+						<p>${changeTime(arr[i].time)}</p>
+						</div>
+						<span id="sx" onclick=sx("${arr[i]._id}") class=${arr[i].gouxuan}>√</span>
+						</li>
+						`
+					}
+					$("ul").html(str)
+				}else if(res.status=="5"){
+					let arr = res.data;
+					let str = ""
+					for (var i = 0; i < arr.length; i++) {
+						str+=`
+						<li>
+						<button onclick=del("${arr[i]._id}")>删除</button>
+						<div class="content">
+						<p>${arr[i].xinyuan}</p>
+						<p>${changeTime(arr[i].time)}</p>
+						</div>
+						<span id="sx" onclick=sx("${arr[i]._id}") class=${arr[i].gouxuan}>√</span>
+						</li>
+						`
+					}
+					$("ul").html(str)
+				}
+			})
+			$("input").eq(0).val("")
+		} 
+		function del (id) {
+			ajax.get("http://localhost:8080/del",{_id:id}).then(res=>{
+				show()
+			})
+		}
+		function sx(id) {
+			console.log($(this))
+			
+			ajax.get("http://localhost:8080/sx",{_id:id,gouxuan:"purple"}).then(res=>{
+				res= JSON.parse(res);
+				if (res.status=="2") {
+					show()
+					alert("您已经实现愿望")
+				} else{
+					alert("无需重复实现")
+				}
+			})
+		}
+		function changeTime(time) {
+			var time = time * 1;
+			var data = new Date(time);
+			var str = "年-月-日 时:分:秒";
+			return str.replace("年", data.getFullYear())
+				.replace("月", (data.getMonth() + 1 < 10) ? "0" + data.getMonth() + 1 : data.getMonth() + 1)
+				.replace("日", (data.getDate() < 10) ? "0" + data.getDate() : data.getDate())
+				.replace("时", (data.getHours() < 10) ? "0" + data.getHours() : data.getHours())
+				.replace("分", (data.getMinutes() < 10) ? "0" + data.getMinutes() : data.getMinutes())
+				.replace("秒", (data.getSeconds() < 10) ? "0" + data.getSeconds() : data.getSeconds());
+		}
+	</script>
+</html>
